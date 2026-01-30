@@ -1,12 +1,11 @@
 # =============================
-# Student Names:
-# Group ID:
-# Date:
+# Student Names: Anthony, Chloe, Amanda
+# Group ID: 88
+# Date: 2026-01-23
 # =============================
 # CISC 352
 # heuristics.py
-# desc:
-#
+# desc: with these heuristics we want to reduce search space as fast as possible so that we can find failure fastest and backtrack sooner
 
 
 #Look for #IMPLEMENT tags in this file. These tags indicate what has
@@ -37,7 +36,9 @@ var_ordering == a function with the following template
    '''
 
 def ord_dh(csp):
-    ''' return next Variable to be assigned according to the Degree Heuristic '''
+    ''' return next Variable to be assigned according to the Degree Heuristic
+    highest degree variable is the one involved in the most constraints with other unassigned variables, like degrees in graphs. again same idea by finding the most influential variable so that we can reduce the search space fastest and find failure fastest so that we can backtrack sooner, often used with mrv when mrv results in ties
+    '''
     vars = csp.get_all_unasgn_vars()
     if not vars:
         return None
@@ -62,7 +63,9 @@ def ord_dh(csp):
 
 
 def ord_mrv(csp):
-    ''' return Variable to be assigned according to the Minimum Remaining Values heuristic '''
+    ''' return Variable to be assigned according to the Minimum Remaining Values heuristic
+    we want the smallest domain size so that we can find the failure fastest to backtrack, smallest size has the least options
+    '''
     vars = csp.get_all_unasgn_vars()
     if not vars:
         return None

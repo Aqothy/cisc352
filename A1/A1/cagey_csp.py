@@ -1,7 +1,7 @@
 # =============================
-# Student Names:
-# Group ID:
-# Date:
+# Student Names: Anthony, Chloe, Amanda
+# Group ID: 88
+# Date: 2026-01-29
 # =============================
 # CISC 352
 # cagey_csp.py
@@ -93,10 +93,7 @@ def binary_ne_grid(cagey_grid):
     n, _ = cagey_grid
     csp = CSP(f"Binary_NE_Grid_{n}")
 
-    # Create variables
-    # Format: Cell(row, col) where row, col in 1..n
     vars = []
-    # Store in a 2D list for easy constraint creation, flat list for return
     grid = []
 
     for r in range(1, n + 1):
@@ -108,7 +105,6 @@ def binary_ne_grid(cagey_grid):
             row_vars.append(var)
         grid.append(row_vars)
 
-    # Add Row Constraints (Binary Not Equal)
     for r in range(n):
         for c1 in range(n):
             for c2 in range(c1 + 1, n):
@@ -126,7 +122,6 @@ def binary_ne_grid(cagey_grid):
                 con.add_satisfying_tuples(sat_tuples)
                 csp.add_constraint(con)
 
-    # Add Column Constraints (Binary Not Equal)
     for c in range(n):
         for r1 in range(n):
             for r2 in range(r1 + 1, n):
@@ -165,17 +160,17 @@ def nary_ad_grid(cagey_grid):
             row_vars.append(var)
         grid.append(row_vars)
 
-    # Generate all-different permutations once
+    # all-different permutations
     all_diff_tuples = list(itertools.permutations(domain, n))
 
-    # Row Constraints (N-ary All Diff)
+    # Row Constraints
     for r in range(n):
         scope = grid[r]
         con = Constraint(f"Row_{r + 1}_AllDiff", scope)
         con.add_satisfying_tuples(all_diff_tuples)
         csp.add_constraint(con)
 
-    # Column Constraints (N-ary All Diff)
+    # Column Constraints
     for c in range(n):
         scope = [grid[r][c] for r in range(n)]
         con = Constraint(f"Col_{c + 1}_AllDiff", scope)
@@ -190,11 +185,8 @@ def cagey_csp_model(cagey_grid):
 
     # We use the binary grid model as the base to save space/time on grid constraints
     # compared to full n-ary on large grids, while adding cage constraints.
-    # Note: The prompt allows choice.
     csp, vars_linear = binary_ne_grid(cagey_grid)
 
-    # Create a lookup map for variables
-    # vars_linear is [Cell(1,1), Cell(1,2), ..., Cell(n,n)]
     var_map = {}
     idx = 0
     for r in range(1, n + 1):
@@ -229,17 +221,7 @@ def cagey_csp_model(cagey_grid):
 
         sat_tuples = []
 
-        # Pre-calculate cell domains (all are 1..n)
         cell_domains = [range(1, n + 1) for _ in cage_vars]
-
-        # We need to check every permutation of values assigned to cells?
-        # Actually, constraint is satisfied if *exists* a permutation that satisfies op.
-        # But here we are generating tuples of assignments (v1, v2, ... vn, op).
-        # A tuple (v1...vn, op) is satisfying if there is a permutation of (v1...vn)
-        # that yields target with op.
-
-        # Optimization: Generate cartesian product of cell values
-        # Since n is small (max 9), and cage size usually small, this is feasible.
 
         for values in itertools.product(*cell_domains):
             # values is a tuple (v1, v2, ... vn)
@@ -250,7 +232,6 @@ def cagey_csp_model(cagey_grid):
                     valid_ops.append(op)
 
             for valid_op in valid_ops:
-                # Add (v1, v2, ..., vn, op)
                 sat_tuples.append(values + (valid_op,))
 
         con.add_satisfying_tuples(sat_tuples)
@@ -260,7 +241,6 @@ def cagey_csp_model(cagey_grid):
 
 
 def check_operation(values, op, target):
-    # 1-cell cage case
     if len(values) == 1:
         return values[0] == target
 
@@ -283,10 +263,8 @@ def calculate(values, op):
     elif op == "*":
         return functools.reduce(lambda x, y: x * y, values)
     elif op == "-":
-        # Left associative: ((v1 - v2) - v3) ...
         return functools.reduce(lambda x, y: x - y, values)
     elif op == "/":
-        # Division: no fractions allowed. Must be exact integer division at each step.
         def div_op(x, y):
             if y == 0 or x % y != 0:
                 raise ValueError("Invalid division")
@@ -294,7 +272,6 @@ def calculate(values, op):
 
         return functools.reduce(div_op, values)
     elif op == "%":
-        # Modular Addition: sum(others) % first_element
         if values[0] == 0:
             raise ValueError("Modulo by zero")
         return sum(values[1:]) % values[0]

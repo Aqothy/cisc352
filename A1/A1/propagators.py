@@ -1,7 +1,7 @@
 # =============================
-# Student Names:
-# Group ID:
-# Date:
+# Student Names: Anthony, Chloe, Amanda
+# Group ID: 88
+# Date: 2026-01-23
 # =============================
 # CISC 352
 # propagators.py
@@ -96,32 +96,29 @@ def prop_BT(csp, newVar=None):
                 return False, []
     return True, []
 
+# newVar is the variable that was just assigned
 def prop_FC(csp, newVar=None):
     '''Do forward checking. That is check constraints with
        only one uninstantiated Variable. Remember to keep
        track of all pruned Variable,value pairs and return '''
-    # If newVar is None, we check all constraints in the CSP
     if newVar is None:
         cons = csp.get_all_cons()
     else:
-        # Otherwise, we only check constraints containing newVar
         cons = csp.get_cons_with_var(newVar)
 
     pruned_list = []
 
     for c in cons:
-        # Check if the constraint has exactly one unassigned variable
+        # if there are more than 1 var thats unassigned, there are still options to explore, so dont prune
         if c.get_n_unasgn() == 1:
             var = c.get_unasgn_vars()[0]
-            # Iterate over the current domain of the unassigned variable
+            # Check every value remaining in the unassigned variable's domain.
             for val in var.cur_domain():
-                # Check if assigning this value violates the constraint
-                # (given the current assignments of other variables in scope)
                 if not c.check_var_val(var, val):
                     var.prune_value(val)
-                    pruned_list.append((var, val))
+                    pruned_list.append((var, val)) # Save for potential backtracking restore
 
-                    # If the domain of the variable becomes empty, we found a dead end
+                    # if var has no values left, this branch is a dead end.
                     if var.cur_domain_size() == 0:
                         return False, pruned_list
 
@@ -137,9 +134,7 @@ def prop_GAC(csp, newVar=None):
     else:
         queue = csp.get_cons_with_var(newVar)
 
-    # Use a set to keep track of constraints in queue to avoid duplicates logic if desired,
-    # but strictly following a queue (list) structure is standard.
-    # We remove duplicates from the initial load for efficiency.
+    # set() ensures we don't process the exact same constraint multiple times in a row.
     queue = list(set(queue))
 
     pruned_list = []
@@ -147,14 +142,8 @@ def prop_GAC(csp, newVar=None):
     while queue:
         c = queue.pop(0)
 
-        # Iterate over all variables in the constraint's scope
+        # GAC checks every variable in the constraint, not just unassigned ones.
         for var in c.get_scope():
-            # We only need to check values for unassigned variables,
-            # but GAC technically checks consistency for all.
-            # Optimization: check only unassigned or check all?
-            # The API's prune_value handles unassigned vars.
-            # check_var_val checks against current domains of others.
-
             for val in var.cur_domain():
                 if not c.check_var_val(var, val):
                     var.prune_value(val)
@@ -163,7 +152,9 @@ def prop_GAC(csp, newVar=None):
                     if var.cur_domain_size() == 0:
                         return False, pruned_list
 
-                    # If a value is pruned, we must re-check constraints involving this variable
+                    # since var just lost a value, constraints that var
+                    # belongs to might be affected
+                    # We add all neighboring constraints back to the queue to re-verify them.
                     for neighbor_c in csp.get_cons_with_var(var):
                         if neighbor_c not in queue:
                             queue.append(neighbor_c)
